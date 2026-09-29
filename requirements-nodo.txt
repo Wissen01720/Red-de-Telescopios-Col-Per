@@ -1,0 +1,7 @@
+# Dependencias del nodo (Raspberry Pi). Por apt, además:
+#   sudo apt install python3-picamera2 python3-lgpio python3-numpy python3-opencv
+# y crear el entorno virtual con:  python3 -m venv --system-site-packages .venv
+numpy>=1.24
+opencv-python-headless>=4.8   # omitir si se instaló python3-opencv por apt
+websockets>=13
+pyserial>=3.5                 # solo para monturas LX200 (OnStep, Meade, ...)

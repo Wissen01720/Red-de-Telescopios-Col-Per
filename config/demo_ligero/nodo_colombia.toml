@@ -1,0 +1,47 @@
+# Versión liviana para la nube (menos resolución y cuadros por segundo) del nodo de demostración: Colombia (Bogotá) con cámara y montura simuladas.
+# Para hardware real, parte de config/nodo_hardware_ejemplo.toml.
+
+[node]
+id = "colombia"
+name = "Colombia"
+server_url = "ws://localhost:8000/ws/node"
+token = "demo-token-cambiar"
+state_file = "estado_colombia.json"
+
+[site]
+# Coordenadas aproximadas de Bogotá. Reemplazar por las del sitio real.
+latitude = 4.6380
+longitude = -74.0840
+elevation_m = 2600
+utc_offset_hours = -5
+
+[optics]
+focal_length_mm = 250
+aperture_mm = 80
+
+[camera]
+driver = "simulated"
+width = 640
+height = 480
+stream_width = 640
+fps = 1.5
+exposure_ms = 200
+gain = 4
+
+[camera.simulated]
+clouds = 0.25
+seeing_px = 1.5
+light_pollution = 0.45
+force_night = true    # cielo nocturno aunque sea de día (solo simulador)
+seed = 1
+
+[mount]
+driver = "simulated"
+type = "altaz"
+min_altitude_deg = 10
+max_slew_deg_s = 4.0
+home_alt = 0
+home_az = 0
+
+[analysis]
+interval_s = 4.0

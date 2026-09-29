@@ -1,0 +1,23 @@
+# Servicio systemd para el nodo de telescopio en la Raspberry Pi.
+#   sudo cp deploy/telescopio-nodo.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now telescopio-nodo
+#   journalctl -u telescopio-nodo -f        (ver registros)
+
+[Unit]
+Description=Nodo de telescopio (red Colombia-Peru)
+Wants=network-online.target time-sync.target
+After=network-online.target time-sync.target
+
+[Service]
+User=pi
+Group=pi
+# gpio: motores; video: cámara
+SupplementaryGroups=gpio video dialout
+WorkingDirectory=/home/pi/telescopios
+ExecStart=/home/pi/telescopios/.venv/bin/python -m telescope_node -c /home/pi/telescopios/config/nodo.toml
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

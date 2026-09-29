@@ -1,0 +1,23 @@
+# Servicio systemd para el servidor web (Linux).
+#   sudo cp deploy/telescopio-servidor.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now telescopio-servidor
+
+[Unit]
+Description=Servidor web de la red de telescopios Colombia-Peru
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=telescopios
+WorkingDirectory=/opt/telescopios
+Environment=OBS_NODE_TOKEN=PONER-EL-MISMO-TOKEN-QUE-EN-LOS-NODOS
+Environment=OBS_CONTROL_PASSWORD=PONER-UNA-CONTRASENA
+Environment=OBS_NODES=colombia:Colombia,peru:Perú
+Environment=OBS_CAPTURES_DIR=/opt/telescopios/capturas
+# Solo escucha en local: el acceso público pasa por Caddy (HTTPS), ver deploy/Caddyfile
+ExecStart=/opt/telescopios/.venv/bin/python -m control_server --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Red de Telescopios</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%2310131a'/%3E%3Cpath d='M7 21 L22 9 L25 13 L10 24 Z' fill='%233987e5'/%3E%3Ccircle cx='24' cy='23' r='2' fill='%23d95926'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" /><path d="M7 21 L22 9 L25 13 L10 24 Z" /></svg>
+      <div>
+        <h1>Red de Telescopios Colombia–Perú</h1>
+        <p class="subtitle">Observación sincronizada en vivo</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock" title="Tiempo universal coordinado"><span class="muted">UTC</span> <span id="utc-clock">--:--:--</span></div>
+      <div id="conn" class="status status-critical"><span class="dot"></span><span class="status-text">Conectando…</span></div>
+      <form id="auth-form" class="auth" hidden>
+        <input id="auth-password" type="password" placeholder="Contraseña de control" autocomplete="current-password">
+        <button type="submit" class="btn">Habilitar control</button>
+      </form>
+      <button id="night-toggle" class="btn btn-ghost" type="button" title="Filtro rojo para preservar la visión nocturna">Modo noche</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card controls" aria-label="Control de los telescopios">
+      <div class="control-row">
+        <span class="label">Controlar</span>
+        <div id="scope" class="segmented" role="radiogroup" aria-label="Telescopios a controlar"></div>
+        <span id="readonly-note" class="muted" hidden>Solo lectura: ingresa la contraseña para mover los telescopios</span>
+      </div>
+
+      <form id="goto-form" class="control-row goto-row" autocomplete="off">
+        <label class="label" for="target-input">Objetivo</label>
+        <div class="target-box">
+          <input id="target-input" list="target-suggestions" placeholder="M42, Júpiter, Luna, Sirio, Omega Centauri o 05:35:17 -05:23:28">
+          <datalist id="target-suggestions"></datalist>
+        </div>
+        <button type="submit" class="btn btn-primary control">Apuntar</button>
+      </form>
+      <div class="control-row chips">
+        <span class="label">Visibles ahora</span>
+        <div id="quick-targets" class="chip-list"><span class="muted small">Calculando…</span></div>
+      </div>
+
+      <div class="control-row">
+        <span class="label">Mover</span>
+        <div class="nudge" role="group" aria-label="Desplazar el campo">
+          <button class="btn control" data-nudge="N" title="Norte">▲ N</button>
+          <button class="btn control" data-nudge="E" title="Este">◀ E</button>
+          <button class="btn control" data-nudge="O" title="Oeste">O ▶</button>
+          <button class="btn control" data-nudge="S" title="Sur">▼ S</button>
+        </div>
+        <select id="nudge-step" aria-label="Paso del desplazamiento">
+          <option value="1">1′</option>
+          <option value="5">5′</option>
+          <option value="15" selected>15′</option>
+          <option value="60">1°</option>
+        </select>
+        <span class="spacer"></span>
+        <button id="btn-stop" class="btn btn-danger control" type="button">Detener</button>
+        <button id="btn-track" class="btn control" type="button" aria-pressed="true">Seguimiento: sí</button>
+        <button id="btn-park" class="btn control" type="button">Aparcar</button>
+        <button id="btn-capture" class="btn control" type="button" title="Guarda la imagen actual de cada telescopio con sus metadatos">Capturar</button>
+      </div>
+    </section>
+
+    <section class="card sync" aria-label="Sincronización">
+      <div class="sync-target">
+        <span class="label">Objetivo común</span>
+        <div id="target-name" class="target-name">—</div>
+        <div id="target-detail" class="muted">Elige un objeto para apuntar los telescopios</div>
+      </div>
+      <div class="sync-status">
+        <span class="label">Sincronía</span>
+        <div id="sync-badge" class="status status-muted"><span class="dot"></span><span class="status-text">Esperando dos telescopios</span></div>
+        <div id="sync-detail" class="muted"></div>
+      </div>
+      <div class="sync-visibility">
+        <span class="label">Altura del objetivo</span>
+        <div id="target-vis" class="vis-list"></div>
+      </div>
+    </section>
+
+    <section id="nodes" class="nodes" aria-label="Telescopios"></section>
+
+    <section class="bottom">
+      <div class="card skymap-card">
+        <div class="card-head">
+          <h2>Mapa del cuadrante</h2>
+          <div class="legend" id="skymap-legend"></div>
+          <div class="zoom">
+            <button class="btn btn-ghost" id="zoom-in" type="button" title="Acercar" aria-label="Acercar">+</button>
+            <span id="zoom-label" class="muted">±4°</span>
+            <button class="btn btn-ghost" id="zoom-out" type="button" title="Alejar" aria-label="Alejar">−</button>
+          </div>
+        </div>
+        <div class="skymap-wrap">
+          <canvas id="skymap" aria-label="Mapa del cielo con los campos de ambos telescopios"></canvas>
+          <div id="skymap-tip" class="tooltip" hidden></div>
+        </div>
+        <p class="muted small" id="skymap-caption">Proyección gnomónica centrada en el objetivo. Norte arriba, Este a la izquierda.</p>
+      </div>
+      <div class="card events-card">
+        <div class="card-head"><h2>Bitácora</h2></div>
+        <ol id="events" class="events"></ol>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <template id="node-template">
+    <article class="card node">
+      <header class="node-head">
+        <span class="swatch" aria-hidden="true"></span>
+        <div class="node-title">
+          <h2 class="node-name"></h2>
+          <div class="node-site muted small"></div>
+        </div>
+        <div class="node-badges">
+          <span class="status badge-online"><span class="dot"></span><span class="status-text"></span></span>
+          <span class="status badge-state"><span class="dot"></span><span class="status-text"></span></span>
+        </div>
+      </header>
+
+      <div class="viewer">
+        <img class="stream" alt="">
+        <canvas class="overlay"></canvas>
+        <div class="viewer-empty"><span>Sin señal</span></div>
+        <div class="hud hud-tl"></div>
+        <div class="hud hud-br"></div>
+      </div>
+      <div class="viewer-toggles">
+        <label><input type="checkbox" data-layer="stars" checked> Estrellas detectadas</label>
+        <label><input type="checkbox" data-layer="catalog" checked> Objetos de catálogo</label>
+        <label><input type="checkbox" data-layer="reticle" checked> Retícula</label>
+        <span class="muted small click-hint">Clic en la imagen: centrar ese punto</span>
+        <a class="snapshot-link small" target="_blank" rel="noopener">Abrir imagen</a>
+      </div>
+
+      <p class="summary"></p>
+
+      <div class="node-grid">
+        <div>
+          <h3>Coordenadas del cuadrante</h3>
+          <dl class="kv coords"></dl>
+          <details class="corners">
+            <summary>Esquinas del campo</summary>
+            <dl class="kv corner-list"></dl>
+          </details>
+        </div>
+        <div>
+          <h3>Análisis de imagen</h3>
+          <div class="scene"></div>
+          <div class="tiles"></div>
+          <ul class="notes"></ul>
+        </div>
+      </div>
+
+      <div class="node-grid">
+        <div>
+          <h3>En el campo</h3>
+          <ul class="in-field"></ul>
+        </div>
+        <div>
+          <h3>Condiciones del sitio</h3>
+          <dl class="kv sky"></dl>
+        </div>
+      </div>
+
+      <footer class="node-actions">
+        <button class="btn control btn-align" type="button" title="Si un objeto conocido está centrado, indícalo para corregir el apuntado">Alinear…</button>
+        <label class="small">Exposición (ms) <input class="exp-input" type="number" min="1" max="60000" step="10"></label>
+        <label class="small">Ganancia <input class="gain-input" type="number" min="1" max="64" step="0.5"></label>
+        <button class="btn control btn-camera" type="button">Aplicar cámara</button>
+      </footer>
+    </article>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

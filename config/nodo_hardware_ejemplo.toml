@@ -1,0 +1,72 @@
+# Ejemplo de configuración para una Raspberry Pi con hardware real.
+# Copiar como /etc/telescopio/nodo.toml (o similar) y ajustar cada valor.
+
+[node]
+id = "colombia"                          # identificador único: "colombia" o "peru"
+name = "Colombia"                        # nombre que se muestra en la página
+server_url = "wss://mi-servidor.ejemplo/ws/node"   # ws:// en red local, wss:// con HTTPS
+token = "PONER-UN-TOKEN-LARGO-Y-SECRETO" # debe coincidir con OBS_NODE_TOKEN del servidor
+state_file = "/var/lib/telescopio/estado.json"
+
+[site]
+latitude = 4.6380        # grados, positivo al Norte
+longitude = -74.0840     # grados, positivo al Este (América es negativo)
+elevation_m = 2600
+utc_offset_hours = -5
+
+[optics]
+focal_length_mm = 650    # focal del telescopio (con reductor/Barlow si se usa)
+aperture_mm = 130
+# fov_width_deg = 0.55   # opcional: forzar el campo medido (p. ej. tras resolver una placa)
+# fov_height_deg = 0.41
+
+[camera]
+driver = "picamera2"     # picamera2 (HQ Camera / Camera Module) | opencv (USB/UVC)
+width = 2028             # modo binning 2x2 de la HQ Camera: rápido y con buena sensibilidad
+height = 1520
+stream_width = 960
+fps = 2
+jpeg_quality = 75
+exposure_ms = 500
+gain = 8
+sensor_width_mm = 6.287  # HQ Camera (IMX477). Camera Module 3: 6.45 x 3.63
+sensor_height_mm = 4.712
+rotation_deg = 0         # ajustar si "arriba" en la imagen no coincide con el cénit
+flip_x = false           # true si hay diagonal/espejo
+# device = 0             # solo para driver = "opencv"
+
+[mount]
+driver = "stepper"       # stepper (motores propios) | lx200 (OnStep, Meade, ...)
+type = "altaz"
+min_altitude_deg = 15
+max_altitude_deg = 88
+max_slew_deg_s = 2.0
+home_alt = 0             # posición física al encender: tubo horizontal...
+home_az = 0              # ...apuntando al Norte
+sun_avoidance_deg = 20
+solar_filter = false
+
+[mount.stepper]
+gpio_chip = 0            # Raspberry Pi 5 con kernel anterior a 6.6.45: usar 4
+alt_step_pin = 17        # numeración BCM
+alt_dir_pin = 27
+az_step_pin = 22
+az_dir_pin = 23
+enable_pin = 24          # -1 si no se usa
+enable_active_low = true
+steps_per_rev = 200      # motor NEMA 17 de 1.8°
+microsteps = 16
+alt_gear_ratio = 144     # p. ej. reductora 3:1 por correa x corona 48 dientes
+az_gear_ratio = 144
+alt_invert = false
+az_invert = false
+acceleration_deg_s2 = 1.5
+
+[mount.lx200]
+port = "/dev/ttyUSB0"
+baudrate = 9600
+epoch = "jnow"
+
+[analysis]
+interval_s = 3.0
+detection_sigma = 5.0

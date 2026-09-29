@@ -1,0 +1,7 @@
+# Todo lo necesario para correr la demostración y las pruebas en un PC.
+-r requirements-servidor.txt
+opencv-python-headless>=4.8
+websockets>=13
+pytest>=8
+httpx>=0.27
+astropy>=6        # solo como referencia en las pruebas

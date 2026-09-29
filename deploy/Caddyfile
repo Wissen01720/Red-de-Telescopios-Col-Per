@@ -1,0 +1,6 @@
+# Proxy inverso con HTTPS automático (Let's Encrypt). Reemplazar el dominio.
+# Los nodos se conectan entonces a  wss://telescopios.ejemplo.edu.co/ws/node
+telescopios.ejemplo.edu.co {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8000
+}

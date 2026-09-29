@@ -1,0 +1,8 @@
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+capturas
+estado_*.json
+tests
+.git
